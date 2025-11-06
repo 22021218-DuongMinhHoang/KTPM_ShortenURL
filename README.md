@@ -23,5 +23,5 @@ module.exports = {
 
 ## Chú ý
 - **Ai làm phần nào sửa đúng phần đó**
-- VD: DMH làm Rate Limiting thì chỉ chỉnh sửa trong folder pugins/ratelimiting
+- VD: DMH làm Rate Limiting thì chỉ chỉnh sửa trong folder pugins/rateLimit
 - CQRS thì làm với db.js và có thể tùy chỉnh thêm file nếu cần thiết
