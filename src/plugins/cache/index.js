@@ -1,4 +1,5 @@
 // dùng redis trong docker : docker run -d -p 6379:6379 --name redis-cache redis
+// hảo khởi tạo redis trong package.json: "start": "set REDIS_URL=redis://
 const { createClient } = require('redis');
 
 const DEFAULT_TTL = Number(process.env.CACHE_TTL || 60);
