@@ -13,14 +13,8 @@ if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-<<<<<<< Updated upstream
-// optional: parse JSON body (nếu muốn dùng body JSON later)
-app.use(express.json());
-=======
 // create plain services
 const urlService = makeUrlService();
->>>>>>> Stashed changes
-
 // rate limit middleware instance
 const rateLimitMiddleware = makeRateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000),
