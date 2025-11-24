@@ -1,31 +1,49 @@
+// server.js
 const express = require('express');
 const path = require('path');
-const loadPlugins = require('./infrastructure/pluginLoader');
+
 const makeUrlService = require('./services/urlService');
-const { createUrlController } = require('./controllers/urlController');
+const makeRateLimit = require('./services/rateLimit');
+const { createUrlController } = require('./controllers/urlController'); // lưu ý đường dẫn của bạn: controller/urlController.js
 
 const app = express();
 
-// serve static files from src/public
+if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', true);
+
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+<<<<<<< Updated upstream
 // optional: parse JSON body (nếu muốn dùng body JSON later)
 app.use(express.json());
+=======
+// create plain services
+const urlService = makeUrlService();
+>>>>>>> Stashed changes
 
-// rest of your code...
+// rate limit middleware instance
+const rateLimitMiddleware = makeRateLimit({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000),
+  max: Number(process.env.RATE_LIMIT_MAX || 20),
+});
 
-const port = 3000;
+// attach rateLimit only to /create (POST) route by mounting before controller routes
+app.use('/create', rateLimitMiddleware);
 
-// 1) create base service
-let urlService = makeUrlService();
+// create controller (controller uses service.shortUrl for POST /create, and direct db for GET /short/:id if you keep it)
+createUrlController(app, urlService);
 
-// 2) load plugins -> họ có thể decorate service or register middleware
-// pluginLoader trả về {app, service} sau khi mỗi plugin xử lý
-const context = { app, service: urlService };
-const finalContext = loadPlugins(context); 
-// finalContext.service là service đã được decorate bởi các plugin
+const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+const server = app.listen(port, () => console.log(`listening ${port}`));
 
-// 3) create controllers with final service
-createUrlController(app, finalContext.service);
+// Graceful shutdown (simple)
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down');
+  server.close(() => process.exit(0));
+});
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down');
+  server.close(() => process.exit(0));
+});
 
-app.listen(port, () => console.log(`listening ${port}`));
+module.exports = app;

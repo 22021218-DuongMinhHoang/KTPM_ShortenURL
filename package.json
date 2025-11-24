@@ -10,8 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^4.21.0",
     "express-rate-limit": "^8.2.1",
+    "ioredis": "^5.8.2",
+    "lru-cache": "^11.2.2",
+    "rate-limiter-flexible": "^8.2.1",
     "redis": "^5.9.0",
     "sqlite3": "^5.1.7"
   }

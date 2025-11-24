@@ -1,0 +1,5 @@
+[INFO] 2025-11-22T13:19:16.642Z [cache] creating middleware route='/o' ttl=60 cacheJson=true keyBy=ip
+[DEBUG] 2025-11-22T13:19:16.760Z [cache] decorate connect failed or skipped
+[INFO] 2025-11-22T13:19:16.640Z [cache] redis client already open
+[INFO] 2025-11-22T13:19:16.759Z Redis cache applied for route /o ttl=60s
+[INFO] 2025-11-22T13:24:59.748Z [cache] quitting redis client
