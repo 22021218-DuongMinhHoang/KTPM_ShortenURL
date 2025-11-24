@@ -35,7 +35,8 @@ async function main() {
       };
     });
 
-    app.listen(port);
+    // Ensure the service listens on all interfaces for Docker networking
+    app.listen({ port, hostname: "0.0.0.0" });
 
     console.log(`Server running on port ${port}`);
     console.log(`Service Type: ${serviceType}`);

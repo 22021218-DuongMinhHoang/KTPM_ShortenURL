@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 
 const defaultTTL = parseInt(process.env.CACHE_TTL || "300", 10);
+const dragonflyUrl = process.env.DRAGONFLY_URL || "redis://localhost:6379";
 
 const redis = new Redis(dragonflyUrl, {
   maxRetriesPerRequest: 3,
