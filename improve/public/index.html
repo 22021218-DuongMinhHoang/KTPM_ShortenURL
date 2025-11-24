@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #000000;
+        --accents-1: #fafafa;
+        --accents-2: #eaeaea;
+        --accents-3: #999999;
+        --accents-4: #888888;
+        --accents-5: #666666;
+        --accents-6: #444444;
+        --accents-7: #333333;
+        --accents-8: #111111;
+        --border: #eaeaea;
+        --success: #0070f3;
+        --error: #e00;
+        --radius: 4px;
+      }
+
+      [data-theme="dark"] {
+        --bg: #000000;
+        --fg: #ffffff;
+        --accents-1: #111111;
+        --accents-2: #333333;
+        --accents-3: #444444;
+        --accents-4: #666666;
+        --accents-5: #888888;
+        --accents-6: #999999;
+        --accents-7: #eaeaea;
+        --accents-8: #fafafa;
+        --border: #333333;
+        --success: #0070f3;
+        --error: #ff4d4f;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 640px;
+        padding: 0 20px;
+      }
+
+      header {
+        margin-bottom: 40px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: var(--accents-5);
+        font-size: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        background: var(--bg);
+        transition: border-color 0.15s ease;
+      }
+
+      .card:hover {
+        border-color: var(--accents-5);
+      }
+
+      .input-group {
+        display: flex;
+        gap: 10px;
+      }
+
+      input[type="url"] {
+        flex: 1;
+        height: 48px;
+        padding: 0 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 16px;
+        font-family: inherit;
+        transition: all 0.15s ease;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      input[type="url"]:focus {
+        outline: none;
+        border-color: var(--fg);
+      }
+
+      button {
+        height: 48px;
+        padding: 0 24px;
+        background: var(--fg);
+        color: var(--bg);
+        border: 1px solid var(--fg);
+        border-radius: var(--radius);
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: inherit;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--bg);
+        color: var(--fg);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .feedback {
+        margin-top: 12px;
+        font-size: 14px;
+        color: var(--accents-5);
+        min-height: 20px;
+      }
+
+      .feedback.error {
+        color: var(--error);
+      }
+      .feedback.success {
+        color: var(--success);
+      }
+
+      .result {
+        display: none;
+        margin-top: 24px;
+        border-top: 1px solid var(--border);
+        padding-top: 24px;
+      }
+
+      .result-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+        background: var(--accents-1);
+      }
+
+      .result-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .result-link {
+        color: var(--fg);
+        text-decoration: none;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-right: 10px;
+      }
+
+      .result-link:hover {
+        text-decoration: underline;
+      }
+
+      .copy-btn {
+        height: 32px;
+        padding: 0 12px;
+        font-size: 12px;
+        background: var(--bg);
+        color: var(--fg);
+        border: 1px solid var(--border);
+      }
+
+      .copy-btn:hover {
+        border-color: var(--fg);
+        background: var(--bg);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        cursor: pointer;
+        background: var(--bg);
+        color: var(--fg);
+        transition: all 0.15s ease;
+      }
+
+      .theme-toggle:hover {
+        border-color: var(--fg);
+      }
+
+      .stats {
+        margin-top: 40px;
+        text-align: center;
+        color: var(--accents-5);
+        font-size: 14px;
+      }
+
+      .stats span {
+        color: var(--fg);
+        font-weight: 600;
+      }
+
+      @media (max-width: 600px) {
+        .input-group {
+          flex-direction: column;
+        }
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="5" />
+        <path
+          d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+        />
+      </svg>
+    </button>
+
+    <div class="container">
+      <header>
+        <h1>URL Shortener</h1>
+        <p class="subtitle">High-performance link management.</p>
+      </header>
+
+      <div class="card">
+        <div class="input-group">
+          <input
+            type="url"
+            id="urlInput"
+            placeholder="Enter your long URL..."
+            autocomplete="off"
+          />
+          <button id="shortenBtn">Shorten</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+
+        <div class="result" id="result">
+          <div class="result-row">
+            <a href="#" class="result-link" id="shortLink" target="_blank"></a>
+            <button
+              class="copy-btn"
+              onclick="copyToClipboard('shortLink', this)"
+            >
+              Copy
+            </button>
+          </div>
+          <div
+            class="result-row"
+            style="background: transparent; border: none; padding: 0 12px"
+          >
+            <span class="subtitle" style="font-size: 12px"
+              >Original: <span id="originalUrl"></span
+            ></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats">
+        Session: <span id="statsCount">0</span> links shortened
+      </div>
+    </div>
+
+    <script>
+      const urlInput = document.getElementById("urlInput");
+      const shortenBtn = document.getElementById("shortenBtn");
+      const feedback = document.getElementById("feedback");
+      const result = document.getElementById("result");
+      const shortLinkEl = document.getElementById("shortLink");
+      const originalUrlEl = document.getElementById("originalUrl");
+      const statsCount = document.getElementById("statsCount");
+      const themeToggle = document.getElementById("themeToggle");
+
+      // Theme Logic
+      const getTheme = () => localStorage.getItem("theme") || "light";
+      const setTheme = (theme) => {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        // Update icon
+        themeToggle.innerHTML =
+          theme === "light"
+            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+      };
+
+      setTheme(getTheme());
+      themeToggle.addEventListener("click", () =>
+        setTheme(getTheme() === "light" ? "dark" : "light")
+      );
+
+      // Stats Logic
+      let count = parseInt(localStorage.getItem("shortenCount") || "0");
+      statsCount.textContent = count;
+
+      // Shorten Logic
+      async function shortenUrl() {
+        const url = urlInput.value.trim();
+        if (!url) return;
+
+        try {
+          new URL(url);
+        } catch {
+          feedback.textContent = "Please enter a valid URL (include https://)";
+          feedback.className = "feedback error";
+          return;
+        }
+
+        shortenBtn.disabled = true;
+        shortenBtn.textContent = "Loading...";
+        feedback.textContent = "";
+        result.style.display = "none";
+
+        try {
+          const response = await fetch("/api/shorten", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to shorten URL");
+          }
+
+          const { id } = await response.json();
+          const shortUrl = `${window.location.origin}/short/${id}`;
+
+          shortLinkEl.textContent = shortUrl;
+          shortLinkEl.href = shortUrl;
+          originalUrlEl.textContent = url;
+          result.style.display = "block";
+
+          count++;
+          statsCount.textContent = count;
+          localStorage.setItem("shortenCount", count.toString());
+          urlInput.value = "";
+        } catch (err) {
+          feedback.textContent = err.message;
+          feedback.className = "feedback error";
+        } finally {
+          shortenBtn.disabled = false;
+          shortenBtn.textContent = "Shorten";
+        }
+      }
+
+      shortenBtn.addEventListener("click", shortenUrl);
+      urlInput.addEventListener(
+        "keypress",
+        (e) => e.key === "Enter" && shortenUrl()
+      );
+
+      // Copy Logic
+      async function copyToClipboard(id, btn) {
+        const text = document.getElementById(id).textContent;
+        await navigator.clipboard.writeText(text);
+        const original = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = original), 2000);
+      }
+    </script>
+  </body>
+</html>

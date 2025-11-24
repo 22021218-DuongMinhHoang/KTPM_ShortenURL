@@ -1,27 +1,84 @@
-# KTPM_ShortenURL
-- Chúng ta sử dụng các plugins để mở rộng dự án, cụ thể là thêm các pattern Cache, Retry, Rate Limiting
-- Pattern CQRS sẽ làm việc với file db.js
-## Sơ sơ
-- services/urlService.js chứa 2 phương thức findOrigin và shortUrl
-  - findOrigin: tìm url gốc từ url rút gọn
-  - shortUrl: tạo url rút gọn từ url gốc
-- infrastructure/db.js làm việc với CSDL
-## Plugins
-- Trong folder plugins đã có sẵn các folder cho các pattern với file chạy chính là index.js
-- Thứ tự thực hiện các plugins sẽ được DMH chỉnh sau, nhiệm vụ của ae là làm sao để cài được pattern ae đã chọn vào trong index.js với yêu cầu như sau
-```
-module.exports = {
-  meta: { priority: NUMBER, phase: 'read'|'write'|'both' },
-  register: async ({app}) => { /* optional middleware setup */ },
-  decorate: (service) => { /* optional: return wrapped service */ }
-}
-```
-- Mẫu là file example/exp.js
-## CQRS
-- Pattern này làm việc trực tiếp với db.js
-- Cần đảm bảo là sẽ trả về 2 phương thức findOrigin và shortUrl như đã nói ở trên
+# url shortener
 
-## Chú ý
-- **Ai làm phần nào sửa đúng phần đó**
-- VD: DMH làm Rate Limiting thì chỉ chỉnh sửa trong folder pugins/rateLimit
-- CQRS thì làm với db.js và có thể tùy chỉnh thêm file nếu cần thiết
+## kiến trúc
+
+```
+                            ┌─────────────────────┐
+                            │   Nginx (8090)      │
+                            │  Static + Proxy     │
+                            └──────────┬──────────┘
+                                       │
+                ┌──────────────────────┴──────────────────────┐
+                │                                             │
+     ┌──────────▼──────────┐                     ┌───────────▼──────────┐
+     │  Redirect Service   │                     │  Shorten Service     │
+     │    (Read/Query)     │                     │   (Write/Command)    │
+     │    Port 3001        │                     │    Port 3002         │
+     └──────────┬──────────┘                     └───────────┬──────────┘
+                │                                             │
+                │    ┌────────────────────┐                  │
+                ├───▶│  Dragonfly Cache   │◀─────────────────┤
+                │    │    (Port 6380)     │                  │
+                │    └────────────────────┘                  │
+                │                                             │
+                │    ┌────────────────────┐                  │
+                └───▶│    ScyllaDB        │◀─────────────────┘
+                     │  (Port 9042)       │
+                     └────────────────────┘
+```
+
+### chạy
+
+1. **Clone và di chuyển vào thư mục**:
+
+   ```bash
+   cd improve
+   ```
+
+2. **Cài đặt dependencies**:
+
+   ```bash
+   bun install
+   ```
+
+3. **Khởi động hạ tầng** (ScyllaDB, Dragonfly, Nginx):
+
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Đợi các dịch vụ sẵn sàng** (khoảng 30 giây):
+
+   ```bash
+   docker-compose logs -f
+   ```
+
+5. **Truy cập ứng dụng**:
+   - Frontend: http://localhost:8090
+   - Redirect Service: http://localhost:3001/health
+   - Shorten Service: http://localhost:3002/health
+
+## endpoints
+
+### Redirect Service (Read - Port 3001)
+
+- **GET `/short/:id`** - Chuyển hướng đến URL gốc
+
+### Shorten Service (Write - Port 3002)
+
+- **POST `/api/shorten`** - Tạo URL rút gọn
+  ```json
+  {
+    "url": "https://example.com/long-url"
+  }
+  ```
+- **GET `/health`** - Kiểm tra trạng thái
+
+### access database
+
+```bash
+docker exec -it urlshortener-scylla cqlsh
+
+USE urlshortener;
+SELECT COUNT(*) FROM urls;
+```

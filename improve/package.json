@@ -1,18 +1,21 @@
 {
-  "name": "cs1",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "name": "urlshortener-bun-elysia",
+  "version": "2.0.0",
+  "description": "High-performance URL shortener with CQRS architecture",
+  "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "start": "set REDIS_URL=redis://127.0.0.1:6379 && node src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "redirect": "SERVICE_TYPE=redirect PORT=3001 bun run src/index.ts",
+    "shorten": "SERVICE_TYPE=shorten PORT=3002 bun run src/index.ts"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^4.21.0",
-    "express-rate-limit": "^8.2.1",
-    "redis": "^5.9.0",
-    "sqlite3": "^5.1.7"
+    "elysia": "^1.1.28",
+    "cassandra-driver": "^4.7.2",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
   }
 }
