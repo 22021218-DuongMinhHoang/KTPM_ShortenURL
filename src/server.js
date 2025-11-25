@@ -11,10 +11,11 @@ const app = express();
 if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', true);
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 // create plain services
 const urlService = makeUrlService();
+
 // rate limit middleware instance
 const rateLimitMiddleware = makeRateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000),
@@ -22,7 +23,8 @@ const rateLimitMiddleware = makeRateLimit({
 });
 
 // attach rateLimit only to /create (POST) route by mounting before controller routes
-app.use('/create', rateLimitMiddleware);
+// app.use('/create', rateLimitMiddleware);
+// app.use('/short', rateLimitMiddleware);
 
 // create controller (controller uses service.shortUrl for POST /create, and direct db for GET /short/:id if you keep it)
 createUrlController(app, urlService);

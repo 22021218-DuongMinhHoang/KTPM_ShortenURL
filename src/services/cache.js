@@ -1,8 +1,9 @@
 // src/services/cache.js
 const { createClient } = require('redis');
-const { LRUCache } = require('lru-cache');
+const { getRedisClient } = require('../libs/redisClient')
+//const { LRUCache } = require('lru-cache');
 
-const DEFAULT_TTL_SEC = 30; // mặc định 30s
+const DEFAULT_TTL_SEC = 30 * 100; // mặc định 30s
 const DEFAULT_MAX_ITEMS = 5000;
 
 let redisClient = null;
@@ -10,7 +11,7 @@ let usingRedis = false;
 
 // init Redis nếu có REDIS_URL
 if (process.env.REDIS_URL) {
-  redisClient = createClient({ url: process.env.REDIS_URL });
+  redisClient = createClient();
   redisClient.on('error', (err) => console.error('[cache][redis] error', err));
   redisClient.connect()
     .then(() => {
@@ -24,38 +25,38 @@ if (process.env.REDIS_URL) {
 }
 
 // fallback LRU
-const fallback = new LRUCache({
-  max: Number(process.env.CACHE_MAX_ITEMS || DEFAULT_MAX_ITEMS),
-  ttl: Number(process.env.CACHE_TTL_MS || DEFAULT_TTL_SEC * 1000)
-});
+// const fallback = new LRUCache({
+//   max: Number(process.env.CACHE_MAX_ITEMS || DEFAULT_MAX_ITEMS),
+//   ttl: Number(process.env.CACHE_TTL_MS || DEFAULT_TTL_SEC * 1000)
+// });
 
 // helper functions
 async function get(key) {
   if (usingRedis && redisClient) {
     try {
       const val = await redisClient.get(key);
-      return val != null ? JSON.parse(val) : null;
+      return val != null ? val : null;
     } catch (e) {
-      console.warn('[cache][get] redis failed, fallback to LRU', e);
-      return fallback.get(key) || null;
+      //console.warn('[cache][get] redis failed, fallback to LRU', e);
+      //return fallback.get(key) || null;
     }
   } else {
-    return fallback.get(key) || null;
+    //return fallback.get(key) || null;
   }
 }
 
 async function set(key, value, ttlSec = DEFAULT_TTL_SEC) {
   if (usingRedis && redisClient) {
     try {
-      await redisClient.setEx(key, ttlSec, JSON.stringify(value));
+      await redisClient.setEx(key, ttlSec, value);
       return true;
     } catch (e) {
-      console.warn('[cache][set] redis failed, fallback to LRU', e);
-      fallback.set(key, value, { ttl: ttlSec * 1000 });
+      // console.warn('[cache][set] redis failed, fallback to LRU', e);
+      // fallback.set(key, value, { ttl: ttlSec * 1000 });
       return false;
     }
   } else {
-    fallback.set(key, value, { ttl: ttlSec * 1000 });
+    //fallback.set(key, value, { ttl: ttlSec * 1000 });
     return false;
   }
 }
@@ -66,12 +67,12 @@ async function del(key) {
       await redisClient.del(key);
       return true;
     } catch (e) {
-      console.warn('[cache][del] redis failed, fallback to LRU', e);
-      fallback.delete(key);
+      // console.warn('[cache][del] redis failed, fallback to LRU', e);
+      // fallback.delete(key);
       return false;
     }
   } else {
-    fallback.delete(key);
+    //fallback.delete(key);
     return false;
   }
 }

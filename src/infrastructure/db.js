@@ -6,14 +6,16 @@ const dbDir = path.join(__dirname, '..', 'db');
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
 const dbPath = path.join(dbDir, 'app.db');
+console.log(`[sqlite] dbPath=${dbPath}, pid=${process.pid}`);
+
 const db = new sqlite3.Database(dbPath);
 
 // Schema: id là PRIMARY KEY, url là UNIQUE để dễ lookup và tránh duplicate mappings
 db.run(`
   CREATE TABLE IF NOT EXISTS data(
-    id TEXT PRIMARY KEY,
-    url TEXT UNIQUE
-  ) STRICT
+        id TEXT,
+        url TEXT
+        ) STRICT
 `);
 
 function makeID(length) {
@@ -29,13 +31,23 @@ function makeID(length) {
 }
 
 function findOrigin(id) {
+  
+
   return new Promise((resolve, reject) => {
-    db.get(`SELECT * FROM data WHERE id = ?`, [id], function (err, res) {
-      if (err) return reject(err);
-      if (res) return resolve(res.url);
-      return resolve(null);
+        return db.get(`SELECT * FROM data WHERE id = ?`, [id], function (err, res) {
+          
+
+            if (err) {
+                return reject(err.message);
+            }
+            
+            if (res != undefined) {
+                return resolve(res.url);
+            } else {
+                return resolve(null);
+            }
+        });
     });
-  });
 }
 
 function findByUrl(url) {
