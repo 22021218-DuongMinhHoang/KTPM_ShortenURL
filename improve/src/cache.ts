@@ -1,23 +1,33 @@
-import Redis from "ioredis";
+import { createClient } from "redis";
 
 const defaultTTL = parseInt(process.env.CACHE_TTL || "300", 10);
-const dragonflyUrl = process.env.DRAGONFLY_URL || "redis://localhost:6379";
+// TỐI ƯU: Ép cứng 127.0.0.1 để tránh lỗi phân giải DNS chậm trên Node/Bun
+const dragonflyUrl = process.env.DRAGONFLY_URL || "redis://127.0.0.1:6379";
 
-const redis = new Redis(dragonflyUrl, {
-  maxRetriesPerRequest: 3,
-  retryStrategy(times) {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
+// Dùng node-redis (nhẹ hơn và giống System B)
+const redis = createClient({
+  url: dragonflyUrl,
+  socket: {
+    connectTimeout: 10000,
+    keepAlive: true,
+  }
+});
+
+// SỬA LỖI LOG: In toàn bộ object err để thấy rõ nội dung lỗi (Connection refused, Timeout, v.v.)
+redis.on("error", (err) => {
+  console.error("Redis Client Error:", err);
 });
 
 redis.on("connect", () => {
-  console.log("Connected to Dragonfly cache");
+  console.log("Connected to Dragonfly cache (node-redis)");
 });
 
-redis.on("error", (err) => {
-  console.error("Dragonfly error:", err.message);
-});
+// Kết nối ngay lập tức (Bun hỗ trợ top-level await)
+try {
+    await redis.connect();
+} catch (e) {
+    console.error("Fatal: Could not connect to Redis at startup", e);
+}
 
 export async function get(key: string): Promise<string | null> {
   try {
@@ -34,7 +44,8 @@ export async function set(
   ttl: number = defaultTTL
 ): Promise<void> {
   try {
-    await redis.setex(key, ttl, value);
+    // Cú pháp của node-redis v4: { EX: seconds }
+    await redis.set(key, value, { EX: ttl });
   } catch (err) {
     console.error("Cache set error:", err);
   }
@@ -75,8 +86,11 @@ export async function ttl(key: string): Promise<number> {
 }
 
 export async function closeCache(): Promise<void> {
-  await redis.quit();
+  if (redis.isOpen) {
+      await redis.quit();
+  }
   console.log("Dragonfly cache connection closed");
 }
 
+// Export instance để dùng cho RateLimit
 export { redis };

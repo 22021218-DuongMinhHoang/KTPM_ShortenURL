@@ -18,7 +18,7 @@ const handleRedirect = async (id: string, set: any) => {
         return (set.status = 404), "<h1>404 Not Found</h1>";
       }
 
-      await cache.set(cacheKey, url, cacheTTL);
+      cache.set(cacheKey, url, cacheTTL);
     }
 
     return new Response(null, {

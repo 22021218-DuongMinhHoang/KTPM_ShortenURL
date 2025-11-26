@@ -3,6 +3,7 @@ import * as db from "./db";
 import * as cache from "./cache";
 import { redirectService } from "./services/redirect";
 import { shortenService } from "./services/shorten";
+import { rateLimitMiddleware } from "./middleware/rateLimit";
 
 const serviceType = process.env.SERVICE_TYPE || "both";
 const port = parseInt(process.env.PORT || "3001", 10);
@@ -13,6 +14,8 @@ async function main() {
     await db.initDatabase();
 
     const app = new Elysia();
+
+    app.use(rateLimitMiddleware);
 
     if (serviceType === "redirect") {
       console.log("Starting URL Redirect Service (CQRS Read)");
