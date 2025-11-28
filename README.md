@@ -93,14 +93,29 @@ USE urlshortener;
 SELECT COUNT(*) FROM urls;
 ```
 ## Các phần đã tối ưu
-1. CSDL
-- Nhóm chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng.
-2. Thêm cache
-- Nhóm sử dụng DragonFly để lưu cache và tăng tốc độ của hệ thống.
-3. Thêm rate limit
-- Nhóm thêm rate limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request.
-- rate limit cho read/write.
-4. Thêm retry
-- Nhóm có cài thêm retry ở những chỗ hợp lí nhằm đảm bảo hệ thống vẫn hoạt động bình thường khi gặp những lỗi ngắn hạn.
-5. Sử dụng CQRS
-- Nhóm đã tách hệ thống ra 2 service đọc và ghi giúp cho hệ thống có thể dễ dàng được mở rộng hay chỉnh sửa cũng như đảm bảo 2 thao tác đọc ghi không bị conflict với nhau
+
+#### 1. CSDL
+
+- Nhóm chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng
+- Nhóm đã thêm tính năng kiểm tra URL có tồn tại trong DB chưa
+
+#### 2. Cache
+
+- Nhóm sử dụng DragonFly để lưu cache và tăng tốc độ của hệ thống
+
+#### 3. Rate Limit
+
+- Nhóm thêm rate limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request
+- Nhóm có sử dụng service của redis cho rate limit
+- Hiện tại, rate limit giới hạn ... requests trong ... s
+
+#### 4. Retry
+
+- Nhóm có cài thêm retry ở những chỗ hợp lí nhằm đảm bảo hệ thống vẫn hoạt động bình thường khi gặp những lỗi tạm thời
+- Retry được sử dụng ở thao tác đọc, không thực hiện đối với ghi để tránh bị duplicate data
+- Các thao tác cần Retry khác bao gồm kết nối ScyllaDB, Redis, DragonFly
+
+#### 5. CQRS
+
+- Nhóm đã tách hệ thống ra 2 service đọc và ghi giúp cho hệ thống có thể dễ dàng được mở rộng hay chỉnh sửa
+- Đồng thời việc tách ra cũng đảm bảo không bị mắc những lỗi khi dùng đọc ghi song song trong thiết kế, VD như Retry ở trên
