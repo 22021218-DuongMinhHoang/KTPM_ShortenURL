@@ -24,7 +24,7 @@ export const shortenService = new Elysia()
         );
       }
 
-      const id = await withRetry(() => db.shortUrl(url));
+      const id = await db.shortUrl(url);
 
       const cacheKey = `url:${id}`;
       await cache.set(cacheKey, url);

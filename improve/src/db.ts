@@ -1,14 +1,12 @@
 import mysql from 'mysql2/promise';
 
-// Cấu hình kết nối MySQL
-// Mặc định cho XAMPP: user='root', password='', port=3306
 const dbConfig = {
   host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   port: parseInt(process.env.DB_PORT || '3306', 10),
   waitForConnections: true,
-  connectionLimit: 10, // Giữ 10 kết nối sẵn sàng (Pool)
+  connectionLimit: 10,
   queueLimit: 0
 };
 
@@ -17,7 +15,6 @@ let pool: mysql.Pool;
 
 export async function initDatabase(): Promise<void> {
   try {
-    // 1. Tạo kết nối tạm thời để tạo Database nếu chưa tồn tại
     const tempConnection = await mysql.createConnection({
       host: dbConfig.host,
       user: dbConfig.user,
