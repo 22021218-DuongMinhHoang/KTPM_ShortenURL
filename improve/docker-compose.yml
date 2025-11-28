@@ -1,0 +1,101 @@
+services:
+  scylla:
+    image: scylladb/scylla:latest
+    container_name: urlshortener-scylla
+    ports:
+      - "9042:9042" # CQL
+      - "9142:9142" # Prometheus/admin
+    volumes:
+      - scylla-data:/var/lib/scylla
+    command: --smp 1 --memory 750M
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe cluster"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - urlshortener
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: urlshortener-dragonfly
+    ports:
+      - "6380:6379"
+    volumes:
+      - dragonfly-data:/data
+    command: ["--maxmemory", "2gb"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - urlshortener
+
+  nginx:
+    image: nginx:alpine
+    container_name: urlshortener-nginx
+    ports:
+      - "8090:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./public:/usr/share/nginx/html:ro
+    depends_on:
+      - redirect-service
+      - shorten-service
+    networks:
+      - urlshortener
+    restart: unless-stopped
+
+  redirect-service:
+    build: .
+    container_name: urlshortener-redirect
+    environment:
+      - SERVICE_TYPE=redirect
+      - PORT=3001
+      - SCYLLA_CONTACT_POINTS=scylla
+      - SCYLLA_PORT=9042
+      - SCYLLA_DATACENTER=datacenter1
+      - DRAGONFLY_URL=redis://dragonfly:6379
+      - CACHE_TTL=300
+    ports:
+      - "3001:3001"
+    depends_on:
+      scylla:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+    networks:
+      - urlshortener
+    restart: unless-stopped
+
+  shorten-service:
+    build: .
+    container_name: urlshortener-shorten
+    environment:
+      - SERVICE_TYPE=shorten
+      - PORT=3002
+      - SCYLLA_CONTACT_POINTS=scylla
+      - SCYLLA_PORT=9042
+      - SCYLLA_DATACENTER=datacenter1
+      - DRAGONFLY_URL=redis://dragonfly:6379
+      - RATE_LIMIT_MAX=20
+      - RATE_LIMIT_WINDOW_MS=60000
+    ports:
+      - "3002:3002"
+    depends_on:
+      scylla:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+    networks:
+      - urlshortener
+    restart: unless-stopped
+
+networks:
+  urlshortener:
+    driver: bridge
+
+volumes:
+  scylla-data:
+  dragonfly-data:
