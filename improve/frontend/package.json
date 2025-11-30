@@ -10,17 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
     "@tailwindcss/vite": "^4.1.17",
-    "autoprefixer": "^10.4.22",
     "clsx": "^2.1.1",
     "lucide-react": "^0.555.0",
-    "postcss": "^8.5.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
     "swr": "^2.3.7",
-    "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^4.1.17"
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

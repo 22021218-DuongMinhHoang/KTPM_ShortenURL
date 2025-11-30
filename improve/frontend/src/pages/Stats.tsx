@@ -1,15 +1,29 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link as RouterLink } from "react-router-dom";
 import useSWR from "swr";
 import {
-  ArrowLeft,
-  MousePointer2,
-  Clock,
-  Globe,
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  CircularProgress,
+  Alert,
+  Paper,
+  Divider,
+} from "@mui/material";
+import {
+  ArrowBack,
+  Mouse,
+  AccessTime,
+  Public,
   Shield,
-  Loader2,
-  AlertCircle,
-  Calendar,
-} from "lucide-react";
+  CalendarToday,
+} from "@mui/icons-material";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -35,137 +49,194 @@ export default function Stats() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-10 w-10 text-orange-500 animate-spin mb-4" />
-        <p className="text-slate-400 font-medium">Loading analytics...</p>
-      </div>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-red-500">
-        <AlertCircle className="h-10 w-10 mb-4" />
-        <h3 className="text-lg font-bold text-white">Failed to load stats</h3>
-        <p className="text-slate-400 mt-1">
-          Could not retrieve data for ID: {id}
-        </p>
-        <Link
-          to="/dashboard"
-          className="mt-6 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors text-white"
-        >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          mt: 8,
+        }}
+      >
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load stats
+        </Alert>
+        <Button component={RouterLink} to="/dashboard" variant="outlined">
           Back to Dashboard
-        </Link>
-      </div>
+        </Button>
+      </Box>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link
+    <Box sx={{ mt: 4 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+        <Button
+          component={RouterLink}
           to="/dashboard"
-          className="p-2 rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-orange-500 hover:border-orange-500/30 transition-colors"
+          startIcon={<ArrowBack />}
+          sx={{ mr: 2 }}
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h2 className="text-2xl font-bold text-white">Analytics Report</h2>
-          <p className="text-slate-400 flex items-center gap-2 text-sm mt-1">
-            <span className="font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-300">
-              /{id}
-            </span>
-          </p>
-        </div>
-      </div>
+          Back
+        </Button>
+        <Box>
+          <Typography variant="h4" component="h1">
+            Analytics Report
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            /{id}
+          </Typography>
+        </Box>
+      </Box>
 
-      {/* Main Stats Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-800 flex items-center gap-4">
-          <div className="p-3 bg-orange-500/10 rounded-xl text-orange-500">
-            <MousePointer2 className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-400">Total Clicks</p>
-            <p className="text-3xl font-bold text-white">
-              {parseInt(data?.clicks || "0").toLocaleString()}
-            </p>
-          </div>
-        </div>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" },
+          gap: 3,
+          mb: 4,
+        }}
+      >
+        <Card>
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar sx={{ bgcolor: "primary.light" }}>
+              <Mouse />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Total Clicks
+              </Typography>
+              <Typography variant="h5">
+                {parseInt(data?.clicks || "0").toLocaleString()}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
 
-        <div className="bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-800 flex items-center gap-4">
-          <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-400">Last Activity</p>
-            <p className="text-lg font-bold text-white">
-              {data?.recent_clicks?.[0]
-                ? new Date(data.recent_clicks[0].created_at).toLocaleTimeString(
-                    [],
-                    { hour: "2-digit", minute: "2-digit" }
-                  )
-                : "N/A"}
-            </p>
-          </div>
-        </div>
+        <Card>
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar sx={{ bgcolor: "success.light" }}>
+              <AccessTime />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Last Activity
+              </Typography>
+              <Typography variant="h6">
+                {data?.recent_clicks?.[0]
+                  ? new Date(
+                      data.recent_clicks[0].created_at
+                    ).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "N/A"}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
 
-        <div className="bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-800 flex items-center gap-4">
-          <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
-            <Globe className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-400">Top Referrer</p>
-            <p
-              className="text-lg font-bold text-white truncate max-w-[150px]"
-              title={data?.recent_clicks?.[0]?.referrer}
-            >
-              {data?.recent_clicks?.[0]?.referrer || "Direct"}
-            </p>
-          </div>
-        </div>
-      </div>
+        <Card>
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar sx={{ bgcolor: "info.light" }}>
+              <Public />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Top Referrer
+              </Typography>
+              <Typography variant="h6" noWrap sx={{ maxWidth: 150 }}>
+                {data?.recent_clicks?.[0]?.referrer || "Direct"}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
-      {/* Recent Activity List */}
-      <div className="bg-slate-900 rounded-2xl shadow-sm border border-slate-800 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/30">
-          <h3 className="font-bold text-white">Recent Activity Log</h3>
-        </div>
-        <div className="divide-y divide-slate-800">
+      <Paper variant="outlined">
+        <Box sx={{ p: 2, bgcolor: "background.default" }}>
+          <Typography variant="h6">Recent Activity Log</Typography>
+        </Box>
+        <Divider />
+        <List>
           {data?.recent_clicks?.map((log, i) => (
-            <div
-              key={i}
-              className="p-4 sm:px-6 hover:bg-slate-800/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-1.5 bg-slate-800 rounded-lg text-slate-400">
-                  <Globe className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">{log.ip}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{log.ua}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6 text-sm text-slate-400">
-                <div className="flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5" />
-                  <span className="truncate max-w-[150px]">{log.referrer}</span>
-                </div>
-                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {new Date(log.created_at).toLocaleString()}
-                </div>
-              </div>
+            <div key={i}>
+              <ListItem alignItems="flex-start">
+                <ListItemAvatar>
+                  <Avatar>
+                    <Public fontSize="small" />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={log.ip}
+                  secondary={
+                    <>
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        color="text.primary"
+                      >
+                        {log.ua}
+                      </Typography>
+                      <br />
+                      <Box
+                        component="span"
+                        sx={{
+                          display: "flex",
+                          gap: 2,
+                          mt: 0.5,
+                          fontSize: "0.8rem",
+                          color: "text.secondary",
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Shield fontSize="inherit" /> {log.referrer}
+                        </Box>
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <CalendarToday fontSize="inherit" />{" "}
+                          {new Date(log.created_at).toLocaleString()}
+                        </Box>
+                      </Box>
+                    </>
+                  }
+                />
+              </ListItem>
+              {i < (data?.recent_clicks?.length || 0) - 1 && (
+                <Divider variant="inset" component="li" />
+              )}
             </div>
           ))}
           {(!data?.recent_clicks || data.recent_clicks.length === 0) && (
-            <div className="p-12 text-center text-slate-500">
-              No activity recorded yet.
-            </div>
+            <ListItem>
+              <ListItemText
+                primary="No activity recorded yet."
+                sx={{ textAlign: "center", color: "text.secondary" }}
+              />
+            </ListItem>
           )}
-        </div>
-      </div>
-    </div>
+        </List>
+      </Paper>
+    </Box>
   );
 }
