@@ -10,6 +10,16 @@ const keyspace = process.env.SCYLLA_KEYSPACE || "urlshortener";
 const client = new Client({
   contactPoints,
   localDataCenter,
+  pooling: {
+    coreConnectionsPerHost: {
+      0: 4,
+      1: 1,
+    },
+  },
+  socketOptions: {
+    connectTimeout: 10000,
+    readTimeout: 12000,
+  },
 });
 
 let initialized = false;

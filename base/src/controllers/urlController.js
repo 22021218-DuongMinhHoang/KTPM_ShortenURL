@@ -17,13 +17,16 @@ function createUrlController(app, service) {
     }
     });
 
-  app.post('/create', async (req, res) => {
+  app.post('/api/shorten', async (req, res) => {
     try {
-      const url = req.query.url;
+      const url = req.body.url;
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
       const newID = await service.shortUrl(url);
-      res.send(newID);
+      res.json({ id: newID });
     } catch (err) {
-      res.status(500).send(err.message || err);
+      res.status(500).json({ error: err.message || err });
     }
   });
 }

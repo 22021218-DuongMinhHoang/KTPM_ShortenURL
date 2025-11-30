@@ -15,7 +15,7 @@ async function main() {
 
     const app = new Elysia();
 
-    app.use(rateLimitMiddleware);
+    // app.use(rateLimitMiddleware);
 
     if (serviceType === "redirect") {
       console.log("Starting URL Redirect Service (CQRS Read)");
