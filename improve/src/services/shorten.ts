@@ -41,4 +41,26 @@ export const shortenService = new Elysia()
       );
     }
   })
+  .get("/api/links", async ({ query, set }) => {
+    try {
+      const page = query.page ? parseInt(query.page as string) : 1;
+      const limit = query.limit ? parseInt(query.limit as string) : 20;
+
+      const result = await db.getAllLinks(page, limit);
+      return result;
+    } catch (err) {
+      console.error("Get links error:", err);
+      return (set.status = 500), { error: "internal_error" };
+    }
+  })
+
+  .get("/api/stats/:id", async ({ params: { id }, set }) => {
+    try {
+      const stats = await db.getUrlStats(id);
+      return stats;
+    } catch (err) {
+      console.error("Get stats error:", err);
+      return (set.status = 500), { error: "internal_error" };
+    }
+  })
   .get("/health", () => ({ status: "healthy", service: "shorten" }));

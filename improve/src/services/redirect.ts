@@ -5,7 +5,7 @@ import { withRetry } from "../utils/retry";
 
 const cacheTTL = parseInt(process.env.CACHE_TTL || "300", 10);
 
-const handleRedirect = async (id: string, set: any) => {
+const handleRedirect = async (id: string, set: any, request: Request) => {
   try {
     const cacheKey = `url:${id}`;
     let url = await cache.get(cacheKey);
@@ -21,10 +21,20 @@ const handleRedirect = async (id: string, set: any) => {
       cache.set(cacheKey, url, cacheTTL);
     }
 
+    const ip = request.headers.get("x-real-ip") || "unknown";
+    const ua = request.headers.get("user-agent") || "unknown";
+    const referrer = request.headers.get("referer") || "direct";
+
+    Promise.all([
+      db.incrementClick(id),
+      db.logClick(id, ip, ua, referrer),
+    ]).catch((err) => console.error("Tracking error:", err));
+
     return new Response(null, {
       status: 302,
       headers: {
         Location: url,
+        "X-Robots-Tag": "noindex, nofollow",
       },
     });
   } catch (err) {
@@ -34,5 +44,7 @@ const handleRedirect = async (id: string, set: any) => {
 };
 
 export const redirectService = new Elysia()
-  .get("/short/:id", ({ params: { id }, set }) => handleRedirect(id, set))
+  .get("/short/:id", ({ params: { id }, set, request }) =>
+    handleRedirect(id, set, request)
+  )
   .get("/health", () => ({ status: "healthy", service: "redirect" }));

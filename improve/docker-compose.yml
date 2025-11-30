@@ -39,7 +39,7 @@ services:
       - "8090:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./public:/usr/share/nginx/html:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
     depends_on:
       - redirect-service
       - shorten-service
