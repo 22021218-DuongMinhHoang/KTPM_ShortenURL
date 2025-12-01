@@ -89,28 +89,24 @@ export async function findOrigin(id: string): Promise<string | null> {
 }
 
 export async function createShortUrl(id: string, url: string): Promise<string> {
-  return withRetry(
-    async () => {
-      const checkQuery = `SELECT id FROM ${keyspace}.urls WHERE url = ? LIMIT 1`;
-      const checkResult = await client.execute(checkQuery, [url], {
-        prepare: true,
-      });
-
-      if (checkResult.rowLength > 0) {
-        const existingId = checkResult.first().get("id");
-        return existingId;
-      }
-
-      const insertQuery = `INSERT INTO ${keyspace}.urls (id, url, created_at) VALUES (?, ?, toTimestamp(now()))`;
-      await client.execute(insertQuery, [id, url], { prepare: true });
-
-      return id;
-    },
-    { idempotencyKey: id }
+  const insertQuery = `INSERT INTO ${keyspace}.urls (id, url, created_at) VALUES (?, ?, toTimestamp(now()))`;
+  await withRetry((_key) =>
+    client.execute(insertQuery, [id, url], { prepare: true })
   );
+  return id;
 }
 
 export async function shortUrl(url: string): Promise<string> {
+  const checkQuery = `SELECT id FROM ${keyspace}.urls WHERE url = ? LIMIT 1`;
+  const checkResult = await client.execute(checkQuery, [url], {
+    prepare: true,
+  });
+
+  if (checkResult.rowLength > 0) {
+    const existingId = checkResult.first().get("id");
+    return existingId;
+  }
+
   const newID = nanoid(7);
 
   const finalID = await createShortUrl(newID, url);
