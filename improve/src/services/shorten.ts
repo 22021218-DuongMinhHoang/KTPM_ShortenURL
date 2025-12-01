@@ -1,7 +1,6 @@
 import { Elysia } from "elysia";
 import * as cache from "../cache";
 import * as db from "../db";
-import { withRetry } from "../utils/retry";
 
 export const shortenService = new Elysia()
   .post("/api/shorten", async ({ body, set, request }) => {

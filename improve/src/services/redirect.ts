@@ -1,7 +1,6 @@
 import { Elysia } from "elysia";
 import * as db from "../db";
 import * as cache from "../cache";
-import { withRetry } from "../utils/retry";
 
 const cacheTTL = parseInt(process.env.CACHE_TTL || "300", 10);
 

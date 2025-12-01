@@ -2,11 +2,11 @@
 math.randomseed(os.time())
 
 local short_ids = {
-    "LllgC4c",
-    "_cWhlsl",
-    "7mYt0Yq",
-    "ULAyTyp",
-    "WXnmkX_"
+    "XKY7nsD",
+    "qqFAd8f",
+    "QAXgBr-",
+    "jjVV4sU",
+    "Cc0QmAN"
 }
 
 request = function()
