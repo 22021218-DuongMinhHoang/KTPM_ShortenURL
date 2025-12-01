@@ -1,9 +1,10 @@
-# URL Shortener System Advanced
+# URL Shortener Advance
 
 ## Các tính năng
 
 - Rút gọn URL, tạo id và lưu lại
 - Lấy URL gốc từ id đã tạo và redirect tới URL gốc
+- Track lượng truy cập của URL
 - Sử dụng ScyllaDB để lưu dữ liệu
 - DragonFly để cache và truy xuất nhanh hơn
 - RateLimiting để giới hạn truy cập nhằm chống spam
@@ -106,15 +107,15 @@ SELECT COUNT(*) FROM urls;
 
 #### 3. Rate Limit
 
-- Nhóm thêm rate limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request
-- Nhóm có sử dụng service của redis cho rate limit
-- Hiện tại, rate limit giới hạn ... requests trong ... s
+- Nhóm thêm Rate Limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request
+- Nhóm có sử dụng service của Redis cho Rate Limit
+- Hiện tại, rate limit giới hạn 20 requests trong 60s
 
 #### 4. Retry
 
-- Nhóm có cài thêm retry ở những chỗ hợp lí nhằm đảm bảo hệ thống vẫn hoạt động bình thường khi gặp những lỗi tạm thời
+- Nhóm có cài thêm Retry ở những chỗ hợp lí nhằm đảm bảo hệ thống vẫn hoạt động bình thường khi gặp những lỗi tạm thời
+- Retry sử dụng chiến lược Exponential với tối đa 3 lần
 - Retry được sử dụng ở thao tác đọc, không thực hiện đối với ghi để tránh bị duplicate data
-- Các thao tác cần Retry khác bao gồm kết nối ScyllaDB, Redis, DragonFly
 
 #### 5. CQRS
 

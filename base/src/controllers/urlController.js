@@ -20,6 +20,7 @@ function createUrlController(app, service) {
   app.post('/api/shorten', async (req, res) => {
     try {
       const url = req.body.url;
+      console.log(url)
       if (!url) {
         return res.status(400).json({ error: "URL is required" });
       }

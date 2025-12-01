@@ -118,23 +118,25 @@
       try {
         // Your server expects POST /create?url=...
         // Using encodeURIComponent to be safe
-        const resp = await fetch(`/create?url=${encodeURIComponent(url)}`, {
-          method: 'POST'
-        });
+        const resp = await fetch(`/api/shorten`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          });
 
         if (!resp.ok) {
           const text = await resp.text();
           throw new Error(text || `Server returned ${resp.status}`);
         }
 
-        const data = await resp.text(); // server returns newID as raw text in current code
-        const newID = (data || '').trim();
+        const data = await resp.json(); // server returns newID as raw text in current code
+        const newID = data.id;
 
         if (!newID) {
           feedback.textContent = 'Server trả về kết quả rỗng.';
         } else {
           shortIdEl.textContent = newID;
-          const shortUrl = `${baseHost}/short/${encodeURIComponent(newID)}`;
+          const shortUrl = `${baseHost}/short/${newID}`;
           shortLinkEl.textContent = shortUrl;
           shortLinkEl.href = shortUrl;
           resultBox.style.display = 'block';

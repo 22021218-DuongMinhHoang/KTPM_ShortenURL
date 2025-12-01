@@ -1,5 +1,6 @@
 import { Client } from "cassandra-driver";
 import { withRetry } from "./utils/retry";
+import { nanoid } from "nanoid";
 
 const contactPoints = (process.env.SCYLLA_CONTACT_POINTS || "localhost").split(
   ","
@@ -24,8 +25,6 @@ const client = new Client({
 
 let initialized = false;
 
-import { nanoid } from "nanoid";
-
 export async function initDatabase(): Promise<void> {
   if (initialized) return;
 
@@ -48,6 +47,13 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   console.log("Table urls ready");
+
+  // --- MỚI: Tạo Index cho cột url để cho phép query WHERE url = ? ---
+  await client.execute(`
+    CREATE INDEX IF NOT EXISTS url_index ON urls (url)
+  `);
+  console.log("Index on urls(url) ready");
+  // -----------------------------------------------------------------
 
   await client.execute(`
     CREATE TABLE IF NOT EXISTS url_counters (
@@ -85,16 +91,33 @@ export async function findOrigin(id: string): Promise<string | null> {
   return result.rows[0].url;
 }
 
+// --- ĐÃ SỬA: Kiểm tra trùng lặp trước khi tạo ---
 export async function createShortUrl(id: string, url: string): Promise<string> {
-  const query = `INSERT INTO ${keyspace}.urls (id, url, created_at) VALUES (?, ?, toTimestamp(now()))`;
-  await withRetry(() => client.execute(query, [id, url], { prepare: true }));
-  return id;
+  // 1. Kiểm tra xem URL này đã có trong DB chưa
+  const checkQuery = `SELECT id FROM ${keyspace}.urls WHERE url = ? LIMIT 1`;
+  const checkResult = await client.execute(checkQuery, [url], { prepare: true });
+
+  if (checkResult.rowLength > 0) {
+    const existingId = checkResult.first().get("id");
+    // console.log(`URL already exists inside DB: ${existingId}`);
+    return existingId; // Trả về ID cũ
+  }
+
+  // 2. Nếu chưa có thì Insert mới với ID được truyền vào
+  const insertQuery = `INSERT INTO ${keyspace}.urls (id, url, created_at) VALUES (?, ?, toTimestamp(now()))`;
+  await client.execute(insertQuery, [id, url], { prepare: true });
+  
+  return id; // Trả về ID mới
 }
 
+// --- ĐÃ SỬA: Cập nhật logic nhận ID trả về ---
 export async function shortUrl(url: string): Promise<string> {
   const newID = nanoid(7); // 7 chars is enough for millions of links
-  await createShortUrl(newID, url);
-  return newID;
+  
+  // Hàm createShortUrl bây giờ có thể trả về newID HOẶC id cũ (nếu trùng)
+  const finalID = await createShortUrl(newID, url);
+  
+  return finalID;
 }
 
 export async function incrementClick(id: string): Promise<void> {
