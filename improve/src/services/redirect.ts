@@ -12,7 +12,7 @@ const handleRedirect = async (id: string, set: any, request: Request) => {
 
     if (url) {
     } else {
-      url = await withRetry(() => db.findOrigin(id));
+      url = await db.findOrigin(id);
 
       if (!url) {
         return (set.status = 404), "<h1>404 Not Found</h1>";

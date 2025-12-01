@@ -94,33 +94,37 @@ USE urlshortener;
 SELECT COUNT(*) FROM urls;
 ```
 
-## Các phần đã tối ưu
+## Các phần đã thêm
 
-#### 1. CSDL
+#### 1. UI
+
+- Nhóm có tạo 1 UI đơn giản dành cho hệ thống
+
+#### 2. CSDL
 
 - Nhóm chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng
 - Nhóm đã thêm tính năng kiểm tra URL có tồn tại trong DB chưa
 
-#### 2. Cache
+#### 3. Cache
 
 - Nhóm sử dụng DragonFly để lưu cache và tăng tốc độ của hệ thống
 
-#### 3. Rate Limit
+#### 4. Rate Limit
 
 - Nhóm thêm Rate Limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request
 - Nhóm có sử dụng service của Redis cho Rate Limit
 - Hiện tại, rate limit giới hạn 20 requests trong 60s
 
-#### 4. Retry
+#### 5. Retry
 
 - Nhóm có cài thêm Retry ở những chỗ hợp lí nhằm đảm bảo hệ thống vẫn hoạt động bình thường khi gặp những lỗi tạm thời
 - Retry sử dụng chiến lược Exponential với tối đa 3 lần
 - Retry được sử dụng ở thao tác đọc, không thực hiện đối với ghi để tránh bị duplicate data
 
-#### 5. CQRS
+#### 6. CQRS
 
 - Nhóm đã tách hệ thống ra 2 service đọc và ghi giúp cho hệ thống có thể dễ dàng được mở rộng hay chỉnh sửa
-- Đồng thời việc tách ra cũng đảm bảo không bị mắc những lỗi khi dùng đọc ghi song song trong thiết kế, VD như Retry ở trên
+- Đồng thời việc tách ra cũng đảm bảo không bị mắc những lỗi khi dùng đọc ghi trong thiết kế, VD như Retry ở trên
 
 ### Kết quả đo được
 

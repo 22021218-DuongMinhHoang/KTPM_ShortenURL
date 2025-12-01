@@ -15,7 +15,7 @@ async function main() {
 
     const app = new Elysia();
 
-    // app.use(rateLimitMiddleware);
+    app.use(rateLimitMiddleware);
 
     if (serviceType === "redirect") {
       console.log("Starting URL Redirect Service (CQRS Read)");
@@ -38,7 +38,6 @@ async function main() {
       };
     });
 
-    // Ensure the service listens on all interfaces for Docker networking
     app.listen({ port, hostname: "0.0.0.0" });
 
     console.log(`Server running on port ${port}`);

@@ -47,13 +47,10 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   console.log("Table urls ready");
-
-  // --- MỚI: Tạo Index cho cột url để cho phép query WHERE url = ? ---
   await client.execute(`
     CREATE INDEX IF NOT EXISTS url_index ON urls (url)
   `);
   console.log("Index on urls(url) ready");
-  // -----------------------------------------------------------------
 
   await client.execute(`
     CREATE TABLE IF NOT EXISTS url_counters (
@@ -91,30 +88,24 @@ export async function findOrigin(id: string): Promise<string | null> {
   return result.rows[0].url;
 }
 
-// --- ĐÃ SỬA: Kiểm tra trùng lặp trước khi tạo ---
 export async function createShortUrl(id: string, url: string): Promise<string> {
-  // 1. Kiểm tra xem URL này đã có trong DB chưa
   const checkQuery = `SELECT id FROM ${keyspace}.urls WHERE url = ? LIMIT 1`;
   const checkResult = await client.execute(checkQuery, [url], { prepare: true });
 
   if (checkResult.rowLength > 0) {
     const existingId = checkResult.first().get("id");
-    // console.log(`URL already exists inside DB: ${existingId}`);
-    return existingId; // Trả về ID cũ
+    return existingId;
   }
 
-  // 2. Nếu chưa có thì Insert mới với ID được truyền vào
   const insertQuery = `INSERT INTO ${keyspace}.urls (id, url, created_at) VALUES (?, ?, toTimestamp(now()))`;
   await client.execute(insertQuery, [id, url], { prepare: true });
   
-  return id; // Trả về ID mới
+  return id;
 }
 
-// --- ĐÃ SỬA: Cập nhật logic nhận ID trả về ---
 export async function shortUrl(url: string): Promise<string> {
-  const newID = nanoid(7); // 7 chars is enough for millions of links
+  const newID = nanoid(7);
   
-  // Hàm createShortUrl bây giờ có thể trả về newID HOẶC id cũ (nếu trùng)
   const finalID = await createShortUrl(newID, url);
   
   return finalID;
@@ -139,15 +130,12 @@ export async function getAllLinks(
   page: number = 1,
   limit: number = 20
 ): Promise<{ links: any[]; hasMore: boolean }> {
-  // ScyllaDB does not support OFFSET. For simple pagination, we fetch up to the current page end.
-  // This is O(N) and not suitable for millions of rows, but works for "page, pageSize" request.
-  const fetchLimit = page * limit + 1; // Fetch one extra to check if there are more
+  const fetchLimit = page * limit + 1;
   const query = `SELECT id, url, created_at FROM ${keyspace}.urls LIMIT ${fetchLimit}`;
 
   const result = await client.execute(query, [], { prepare: true });
   const allRows = result.rows;
 
-  // Slice the rows for the current page
   const startIndex = (page - 1) * limit;
   const slicedRows = allRows.slice(startIndex, startIndex + limit);
   const hasMore = allRows.length > page * limit;
@@ -156,7 +144,6 @@ export async function getAllLinks(
     return { links: [], hasMore: false };
   }
 
-  // Optimization: Use IN clause to fetch all counters in one query
   const ids = slicedRows.map((r) => r.id);
   const placeholders = ids.map(() => "?").join(",");
   const counterQuery = `SELECT id, clicks FROM ${keyspace}.url_counters WHERE id IN (${placeholders})`;
@@ -165,7 +152,6 @@ export async function getAllLinks(
     prepare: true,
   });
 
-  // Create a map for fast lookup
   const clicksMap = new Map<string, string>();
   counterResult.rows.forEach((row) => {
     clicksMap.set(row.id, row.clicks?.toString() || "0");

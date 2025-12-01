@@ -2,6 +2,7 @@ import { Elysia } from 'elysia';
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import { redis } from '../cache';
 
+//20 req trong 60s
 const maxRequests = parseInt(process.env.RATE_LIMIT_MAX || '20', 10);
 const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
 const windowSec = Math.ceil(windowMs / 1000);

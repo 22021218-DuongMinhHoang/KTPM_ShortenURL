@@ -1,10 +1,8 @@
 import { createClient } from "redis";
 
 const defaultTTL = parseInt(process.env.CACHE_TTL || "300", 10);
-// TỐI ƯU: Ép cứng 127.0.0.1 để tránh lỗi phân giải DNS chậm trên Node/Bun
 const dragonflyUrl = process.env.DRAGONFLY_URL || "redis://127.0.0.1:6379";
 
-// Dùng node-redis (nhẹ hơn và giống System B)
 const redis = createClient({
   url: dragonflyUrl,
   socket: {
@@ -13,7 +11,6 @@ const redis = createClient({
   }
 });
 
-// SỬA LỖI LOG: In toàn bộ object err để thấy rõ nội dung lỗi (Connection refused, Timeout, v.v.)
 redis.on("error", (err) => {
   console.error("Redis Client Error:", err);
 });
@@ -22,7 +19,6 @@ redis.on("connect", () => {
   console.log("Connected to Dragonfly cache (node-redis)");
 });
 
-// Kết nối ngay lập tức (Bun hỗ trợ top-level await)
 try {
     await redis.connect();
 } catch (e) {
@@ -44,7 +40,6 @@ export async function set(
   ttl: number = defaultTTL
 ): Promise<void> {
   try {
-    // Cú pháp của node-redis v4: { EX: seconds }
     await redis.set(key, value, { EX: ttl });
   } catch (err) {
     console.error("Cache set error:", err);
@@ -92,5 +87,4 @@ export async function closeCache(): Promise<void> {
   console.log("Dragonfly cache connection closed");
 }
 
-// Export instance để dùng cho RateLimit
 export { redis };
