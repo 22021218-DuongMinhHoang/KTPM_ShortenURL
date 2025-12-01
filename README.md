@@ -1,17 +1,25 @@
 # URL Shortener Advance
+## I. Giới thiệu chung
 
-## Các tính năng
+Hệ thống **URL Shortener Advance** là phiên bản cải tiến từ project rút gọn URL ban đầu, tập trung vào:
+- Tăng hiệu năng đọc/ghi.
+- Cải thiện độ ổn định, giảm timeout.
+- Thiết kế lại kiến trúc để dễ mở rộng, dễ bảo trì.
 
-- Rút gọn URL, tạo id và lưu lại
-- Lấy URL gốc từ id đã tạo và redirect tới URL gốc
-- Track lượng truy cập của URL
-- Sử dụng ScyllaDB để lưu dữ liệu
-- DragonFly để cache và truy xuất nhanh hơn
-- RateLimiting để giới hạn truy cập nhằm chống spam
-- Sử dụng Retry nhằm đảm bảo reliable của hệ thống
-- Tách service đọc và ghi ra với CQRS
+---
+### 1. Các tính năng
 
-## Kiến trúc hệ thống
+
+- **Rút gọn URL**: tạo ID ngắn và lưu lại vào CSDL.
+- **Redirect** từ ID sang URL gốc.
+- **Tracking lượt truy cập** của mỗi URL.
+- **Lưu dữ liệu bằng ScyllaDB** giúp truy vấn nhanh, dễ mở rộng.
+- **DragonFly** làm cache giúp truy xuất nhanh hơn.
+- **Rate limiting** chống spam, giới hạn truy cập.
+- **Retry với Exponential Backoff** để tăng độ tin cậy.
+- **CQRS**: tách riêng service đọc và ghi.
+
+## 2. Kiến trúc hệ thống
 
 ```
                             ┌─────────────────────┐
@@ -38,7 +46,7 @@
                      └────────────────────┘
 ```
 
-### Cách chạy
+## 3. Cách chạy
 
 1. **Clone và di chuyển vào thư mục**:
 
@@ -64,12 +72,11 @@
    docker-compose logs -f
    ```
 
-5. **Truy cập ứng dụng**:
+## 4. Truy cập
    - Frontend: http://localhost:8090
    - Redirect Service: http://localhost:3001/health
    - Shorten Service: http://localhost:3002/health
 
-## endpoints
 
 ### Redirect Service (Read - Port 3001)
 
@@ -94,16 +101,73 @@ USE urlshortener;
 SELECT COUNT(*) FROM urls;
 ```
 
-## Các phần đã thêm
+## II. Bối cảnh và vấn đề của project cũ
+### 1. Kiến trúc ban đầu
+Ở phiên bản đầu tiên, hệ thống URL Shortener được xây dựng khá đơn giản:
+
+- 1 service duy nhất (port `3000`) xử lý cả:
+  - Rút gọn URL (write)
+  - Redirect `/short/:id` (read)
+- Cơ sở dữ liệu: SQLite (file `app.db` trên máy)
+- Chưa có:
+  - Cache
+  - Rate limiting
+  - Cơ chế retry
+  - Phân tách đọc/ghi (CQRS)
+
+Toàn bộ traffic đọc/ghi đi vào một process và một file SQLite.
+
+### 2. Vấn đề hiệu năng & ổn định
+
+Khi dùng công cụ `wrk` để benchmark với 12 threads, 400 connections trong 60 giây, hệ thống cũ bộc lộ nhiều hạn chế.
+
+#### 2.1. Kết quả test Write (tạo URL rút gọn – port 3000)
+
+- Requests/sec: `60.10`
+- Latency trung bình: `1.38s`
+- Socket timeout: `2,441` requests trong 60 giây
+
+⇒ Việc tạo shortcode rất chậm, mỗi request mất hơn 1 giây, và rất nhiều request bị timeout.
+
+#### 2.2. Kết quả test Read (redirect – port 3000)
+
+- Requests/sec: `1,179.65`
+- Latency trung bình: `320.05ms`
+- Socket timeout: `216` requests trong 60 giây
+
+⇒ Redirect cũng chậm (trung bình ~0.3s mỗi lần) và vẫn tồn tại timeout.
+
+#### 2.3. Phân tích nguyên nhân
+
++ SQLite là dạng file-based DB, chỉ có single-writer.
+
+⇒  Khi có nhiều kết nối đồng thời (400 connections), việc ghi/đọc trên cùng 1 file gây ra tranh chấp lock, dẫn đến tăng độ trễ và timeout.
+
++  Mỗi lần redirect `/short/:id`, hệ thống đều phải truy vấn DB do không có cache.
+
+⇒  Các URL được truy cập nhiều vẫn phải query lại từ SQLite, dẫn đến vừa chậm vừa tốn tài nguyên không cần thiết.
+
++ Các truy vấn đọc và ghi chung một service nên khi luồng write bị chậm hoặc bị block, luồng read cũng bị ảnh hưởng do chia sẻ cùng tài nguyên (CPU, RAM, DB, connection pool…). =>CQRS
+
++ Nếu có script/bot bắn quá nhiều request, toàn bộ hệ thống dễ bị quá tải, dẫn đến timeout cho cả người dùng bình thường.
+=> rate limiting
+
++ Các lỗi tạm thời (DB busy, network chập chờn…) làm request thất bại ngay lập tức (500, timeout), không có cơ chế thử lại khiến trải nghiệm UX không tốt, hệ thống kém tin cậy => Retry
+
+---
+
+## III. Kiến trúc mới & cách khắc phục
 
 #### 1. UI
 
-- Nhóm có tạo 1 UI đơn giản dành cho hệ thống
-
+// ảnh UI
 #### 2. CSDL
 
-- Nhóm chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng
-- Nhóm đã thêm tính năng kiểm tra URL có tồn tại trong DB chưa
+- Chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng
+
+Ưu điểm:   ScyllaDB là NoSQL kiểu Cassandra, được thiết kế cho throughput rất cao và độ trễ thấp, phù hợp với bài toán key–value và tải đọc/ghi lớn .
+
+- Khi nhận URL mới, service kiểm tra trong ScyllaDB xem URL đó đã tồn tại chưa để có thể tái sử dụng short_id.
 
 #### 3. Cache
 
@@ -111,9 +175,9 @@ SELECT COUNT(*) FROM urls;
 
 #### 4. Rate Limit
 
-- Nhóm thêm Rate Limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request
-- Nhóm có sử dụng service của Redis cho Rate Limit
-- Hiện tại, rate limit giới hạn 20 requests trong 60s
+- Tích hợp thêm Rate Limit để giới hạn truy cập nhằm đảm bảo hệ thống hoạt động tốt khi có quá nhiều request
+- Sử dụng service của Redis cho Rate Limit
+- Rate limit hiện tại: giới hạn 20 requests trong 60s
 
 #### 5. Retry
 
@@ -126,15 +190,14 @@ SELECT COUNT(*) FROM urls;
 - Nhóm đã tách hệ thống ra 2 service đọc và ghi giúp cho hệ thống có thể dễ dàng được mở rộng hay chỉnh sửa
 - Đồng thời việc tách ra cũng đảm bảo không bị mắc những lỗi khi dùng đọc ghi trong thiết kế, VD như Retry ở trên
 
-### Kết quả đo được
-
-Nhóm đã sử dụng công cụ **wrk** để kiểm tra hiệu năng của hệ thống với cấu hình:
-
-- 12 threads
-- 400 kết nối đồng thời
+## V. Kết quả sau khi cải tiến
+### 1. Cấu hình
+- Công cụ: wrk
+- Threads: 12
+- Kết nối: 400 kết nối đồng thời
 - Thời gian test: 60 giây
 
-#### 1. Test Write (Tạo URL rút gọn)
+### 2. Test Write - Tạo URL rút gọn
 
 | Metric             | Base (Port 3000) | Improved (Port 8090) | Cải thiện             |
 | ------------------ | ---------------- | -------------------- | --------------------- |
@@ -142,7 +205,7 @@ Nhóm đã sử dụng công cụ **wrk** để kiểm tra hiệu năng của h�
 | **Latency (Avg)**  | 1.38s            | 49.33ms              | **~28x nhanh hơn**    |
 | **Timeout Errors** | 2,441            | 0                    | **Loại bỏ hoàn toàn** |
 
-#### 2. Test Read (Redirect)
+### 3. Test Read - Redirect
 
 | Metric             | Base (Port 3000) | Improved (Port 8090) | Cải thiện             |
 | ------------------ | ---------------- | -------------------- | --------------------- |
@@ -150,7 +213,7 @@ Nhóm đã sử dụng công cụ **wrk** để kiểm tra hiệu năng của h�
 | **Latency (Avg)**  | 320.05ms         | 64.27ms              | **~5x nhanh hơn**     |
 | **Timeout Errors** | 216              | 0                    | **Loại bỏ hoàn toàn** |
 
-#### Chi tiết log
+### 4.Chi tiết log
 
 <details>
 <summary>Xem chi tiết kết quả test</summary>
