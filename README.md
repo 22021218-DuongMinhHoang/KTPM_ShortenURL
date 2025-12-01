@@ -160,7 +160,11 @@ Khi dùng công cụ `wrk` để benchmark với 12 threads, 400 connections tro
 
 #### 1. UI
 
-// ảnh UI
+<img width="1905" height="906" alt="image" src="https://github.com/user-attachments/assets/4dd3f41d-cee4-4ffe-864a-94a26428a15d" />
+<img width="1905" height="906" alt="image" src="https://github.com/user-attachments/assets/05130910-6bfd-4b9e-b46a-e81a915fceef" />
+<img width="1905" height="906" alt="image" src="https://github.com/user-attachments/assets/ed0bf563-f99b-4527-95b4-0c181c05709f" />
+
+
 #### 2. CSDL
 
 - Chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng
@@ -183,12 +187,11 @@ Khi dùng công cụ `wrk` để benchmark với 12 threads, 400 connections tro
 
 - Nhóm có cài thêm Retry ở những chỗ hợp lí nhằm đảm bảo hệ thống vẫn hoạt động bình thường khi gặp những lỗi tạm thời
 - Retry sử dụng chiến lược Exponential với tối đa 3 lần
-- Retry được sử dụng ở thao tác đọc, không thực hiện đối với ghi để tránh bị duplicate data
+- Retry được sử dụng trong thao tác đọc và ghi, có sử dụng idempotency key
 
 #### 6. CQRS
 
 - Nhóm đã tách hệ thống ra 2 service đọc và ghi giúp cho hệ thống có thể dễ dàng được mở rộng hay chỉnh sửa
-- Đồng thời việc tách ra cũng đảm bảo không bị mắc những lỗi khi dùng đọc ghi trong thiết kế, VD như Retry ở trên
 
 ## V. Kết quả sau khi cải tiến
 ### 1. Cấu hình
