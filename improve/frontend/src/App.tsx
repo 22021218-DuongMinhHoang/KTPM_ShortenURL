@@ -46,7 +46,11 @@ function App() {
             <Button color="inherit" component={Link} to="/dashboard">
               Dashboard
             </Button>
-            <Button color="inherit" href="https://github.com" target="_blank">
+            <Button
+              color="inherit"
+              href="https://github.com/22021218-DuongMinhHoang/KTPM_ShortenURL"
+              target="_blank"
+            >
               GitHub
             </Button>
           </Toolbar>

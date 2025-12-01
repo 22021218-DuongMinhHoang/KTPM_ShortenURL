@@ -69,11 +69,14 @@ export default function Home() {
         mt: 8,
       }}
     >
-      <Typography variant="h2" component="h1" gutterBottom align="center">
-        Shorten links fast
-      </Typography>
-      <Typography variant="h5" color="text.secondary" paragraph align="center">
-        The world's fastest URL shortener.
+      <Typography
+        variant="h5"
+        component="h1"
+        gutterBottom
+        align="center"
+        fontStyle="italic"
+      >
+        shorten links at the speed of thought.
       </Typography>
 
       <Card sx={{ minWidth: 275, maxWidth: 600, width: "100%", mt: 4, p: 2 }}>
