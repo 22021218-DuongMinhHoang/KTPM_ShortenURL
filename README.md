@@ -169,7 +169,7 @@ Khi dùng công cụ `wrk` để benchmark với 12 threads, 400 connections tro
 
 - Chuyển từ sử dụng SQLite sang ScyllaDB với khả năng truy vấn nhanh và dễ ràng mở rộng
 
-Ưu điểm:   ScyllaDB là NoSQL kiểu Cassandra, được thiết kế cho throughput rất cao và độ trễ thấp, phù hợp với bài toán key–value và tải đọc/ghi lớn .
+Ưu điểm:   ScyllaDB là NoSQL, được thiết kế cho throughput rất cao và độ trễ thấp, phù hợp với bài toán key value và tải đọc/ghi lớn .
 
 - Khi nhận URL mới, service kiểm tra trong ScyllaDB xem URL đó đã tồn tại chưa để có thể tái sử dụng short_id.
 
